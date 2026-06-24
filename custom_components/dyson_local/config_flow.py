@@ -4,20 +4,16 @@ import logging
 import threading
 from typing import Optional
 
+import voluptuous as vol
+from homeassistant import config_entries
+from homeassistant.components.zeroconf import async_get_instance
+from homeassistant.const import CONF_EMAIL, CONF_HOST, CONF_NAME, CONF_PASSWORD
+from homeassistant.exceptions import HomeAssistantError
+
+from .cloud.const import CONF_AUTH, CONF_REGION
+from .const import CONF_CREDENTIAL, CONF_DEVICE_TYPE, CONF_SERIAL, DOMAIN
 from .libdyson import DEVICE_TYPE_NAMES, get_device, get_mqtt_info_from_wifi_info
-from .libdyson.cloud import DysonDeviceInfo
-from .libdyson.discovery import DysonDiscovery
-from .libdyson.exceptions import (
-    DysonException,
-    DysonFailedToParseWifiInfo,
-    DysonInvalidCredential,
-    DysonInvalidAuth,
-    DysonNetworkError,
-    DysonOTPTooFrequently,
-    DysonInvalidAccountStatus,
-    DysonLoginFailure,
-)
-from .libdyson.cloud import DysonAccount, DysonAccountCN, REGIONS
+from .libdyson.cloud import REGIONS, DysonAccount, DysonAccountCN, DysonDeviceInfo
 
 # Import device type constants for mapping
 from .libdyson.const import (
@@ -25,32 +21,32 @@ from .libdyson.const import (
     DEVICE_TYPE_360_HEURIST,
     DEVICE_TYPE_360_VIS_NAV,
     DEVICE_TYPE_PURE_COOL,
-    DEVICE_TYPE_PURIFIER_COOL_E,
-    DEVICE_TYPE_PURIFIER_COOL_K,
-    DEVICE_TYPE_PURIFIER_COOL_M,
     DEVICE_TYPE_PURE_COOL_DESK,
     DEVICE_TYPE_PURE_COOL_LINK,
     DEVICE_TYPE_PURE_COOL_LINK_DESK,
     DEVICE_TYPE_PURE_HOT_COOL,
-    DEVICE_TYPE_PURIFIER_HOT_COOL_E,
-    DEVICE_TYPE_PURIFIER_HOT_COOL_K,
     DEVICE_TYPE_PURE_HOT_COOL_LINK,
     DEVICE_TYPE_PURE_HUMIDIFY_COOL,
+    DEVICE_TYPE_PURIFIER_BIG_QUIET,
+    DEVICE_TYPE_PURIFIER_COOL_E,
+    DEVICE_TYPE_PURIFIER_COOL_K,
+    DEVICE_TYPE_PURIFIER_COOL_M,
+    DEVICE_TYPE_PURIFIER_HOT_COOL_E,
+    DEVICE_TYPE_PURIFIER_HOT_COOL_K,
     DEVICE_TYPE_PURIFIER_HUMIDIFY_COOL_E,
     DEVICE_TYPE_PURIFIER_HUMIDIFY_COOL_K,
-    DEVICE_TYPE_PURIFIER_BIG_QUIET,
 )
-
-import voluptuous as vol
-
-from homeassistant import config_entries
-from homeassistant.components.zeroconf import async_get_instance
-from homeassistant.const import CONF_HOST, CONF_NAME, CONF_EMAIL, CONF_PASSWORD, CONF_USERNAME
-from homeassistant.exceptions import HomeAssistantError
-
-from .const import CONF_CREDENTIAL, CONF_DEVICE_TYPE, CONF_SERIAL, DOMAIN
-
-from .cloud.const import CONF_REGION, CONF_AUTH
+from .libdyson.discovery import DysonDiscovery
+from .libdyson.exceptions import (
+    DysonException,
+    DysonFailedToParseWifiInfo,
+    DysonInvalidAccountStatus,
+    DysonInvalidAuth,
+    DysonInvalidCredential,
+    DysonLoginFailure,
+    DysonNetworkError,
+    DysonOTPTooFrequently,
+)
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -415,13 +411,13 @@ class DysonLocalConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             # Use the device info's built-in mapping method which handles variants properly
             device_type = self._device_info.get_device_type()
             
-            _LOGGER.debug("Cloud ProductType: %s, variant: %s, Mapped to: %s", 
+            _LOGGER.debug("Cloud ProductType: %s, variant: %s, Mapped to: %s",
                          self._device_info.product_type, getattr(self._device_info, 'variant', None), device_type)
             _LOGGER.debug("Device info object has variant attribute: %s", hasattr(self._device_info, 'variant'))
             if hasattr(self._device_info, 'variant'):
                 _LOGGER.debug("Raw variant value: %r", self._device_info.variant)
             if device_type is None:
-                _LOGGER.error("Unknown device type for ProductType: %s, variant: %s", 
+                _LOGGER.error("Unknown device type for ProductType: %s, variant: %s",
                              self._device_info.product_type, getattr(self._device_info, 'variant', None))
                 errors["base"] = "unknown_device_type"
             else:
@@ -461,7 +457,7 @@ class DysonLocalConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
     async def async_step_discovery(self, info: DysonDeviceInfo):
         """Handle step initialized by MyDyson discovery."""
-        _LOGGER.debug("Starting discovery step for device: %s (ProductType: %s)", 
+        _LOGGER.debug("Starting discovery step for device: %s (ProductType: %s)",
                      info.name, info.product_type)
         
         for entry in self._async_current_entries():
@@ -505,7 +501,7 @@ class DysonLocalConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         host: Optional[str] = None,
     ) -> None:
         """Try connect."""
-        _LOGGER.debug("Attempting to connect to device: serial=%s, device_type=%s, host=%s", 
+        _LOGGER.debug("Attempting to connect to device: serial=%s, device_type=%s, host=%s",
                      serial, device_type, host)
         
         device = get_device(serial, credential, device_type)
@@ -513,7 +509,7 @@ class DysonLocalConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         # Check if device creation failed
         if device is None:
             _LOGGER.error("Failed to create device object for serial=%s, device_type=%s. "
-                         "This usually indicates an unknown or unsupported device type.", 
+                         "This usually indicates an unknown or unsupported device type.",
                          serial, device_type)
             raise CannotConnect
         
@@ -535,7 +531,7 @@ class DysonLocalConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             
             # Log the expected service type for debugging
             expected_service_type = "_360eye_mqtt._tcp.local." if device_type == "N223" else "_dyson_mqtt._tcp.local."
-            _LOGGER.debug("Starting discovery for device_type=%s, expecting service type: %s", 
+            _LOGGER.debug("Starting discovery for device_type=%s, expecting service type: %s",
                          device_type, expected_service_type)
             
             discovery.start_discovery(await async_get_instance(self.hass))
@@ -555,11 +551,11 @@ class DysonLocalConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         try:
             device.connect(host)
             _LOGGER.debug("Successfully connected to device via MQTT")
-        except DysonInvalidCredential:
+        except DysonInvalidCredential as err:
             _LOGGER.error("Invalid credentials for device serial=%s", serial)
-            raise InvalidAuth
+            raise InvalidAuth from err
         except DysonException as err:
-            _LOGGER.error("Failed to connect to device serial=%s, device_type=%s, host=%s: %s (%s)", 
+            _LOGGER.error("Failed to connect to device serial=%s, device_type=%s, host=%s: %s (%s)",
                          serial, device_type, host, type(err).__name__, err)
             
             # Add specific logging for MQTT connection refused errors
@@ -571,7 +567,7 @@ class DysonLocalConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 _LOGGER.error("  4. Network connectivity problems")
                 _LOGGER.error("  5. Device already has too many connections")
             
-            raise CannotConnect
+            raise CannotConnect from err
 
 
 class CannotConnect(HomeAssistantError):

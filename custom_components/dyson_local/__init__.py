@@ -1,9 +1,9 @@
 """Support for Dyson devices."""
 
 import asyncio
+import logging
 from datetime import timedelta
 from functools import partial
-import logging
 from typing import List, Optional
 
 from homeassistant.components.zeroconf import async_get_instance
@@ -14,7 +14,7 @@ from homeassistant.exceptions import ConfigEntryNotReady
 from homeassistant.helpers.entity import Entity
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
-from .cloud.const import CONF_AUTH, CONF_REGION, DATA_ACCOUNT, DATA_DEVICES
+from .cloud.const import CONF_AUTH, CONF_REGION, DATA_ACCOUNT
 from .const import (
     CONF_CREDENTIAL,
     CONF_DEVICE_TYPE,
@@ -40,7 +40,6 @@ from .libdyson.dyson_device import DysonDevice
 from .libdyson.exceptions import (
     DysonException,
     DysonInvalidAuth,
-    DysonLoginFailure,
     DysonNetworkError,
 )
 
@@ -75,15 +74,15 @@ async def async_setup_account(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         _LOGGER.debug("Calling account.devices() to get device list")
         devices = await hass.async_add_executor_job(account.devices)
         _LOGGER.debug("Retrieved %d devices from cloud", len(devices))
-    except DysonNetworkError:
+    except DysonNetworkError as err:
         _LOGGER.error("Cannot connect to Dyson cloud service.")
-        raise ConfigEntryNotReady
-    except DysonInvalidAuth:
+        raise ConfigEntryNotReady from err
+    except DysonInvalidAuth as err:
         _LOGGER.error("Invalid authentication credentials for Dyson cloud service.")
-        raise ConfigEntryNotReady
+        raise ConfigEntryNotReady from err
     except Exception as e:
         _LOGGER.error("Unexpected error retrieving devices: %s", str(e))
-        raise ConfigEntryNotReady
+        raise ConfigEntryNotReady from e
 
     _LOGGER.debug("Starting device discovery flows for %d devices", len(devices))
     for device in devices:

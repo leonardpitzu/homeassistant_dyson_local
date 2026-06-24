@@ -3,24 +3,16 @@
 import logging
 from typing import List, Optional
 
-from .const import DATA_DEVICES, DOMAIN
-from .utils import environmental_property
-from .libdyson import DysonPureHotCoolLink
-
 from homeassistant.components.climate import ClimateEntity
-from homeassistant.components.climate.const import (
-    HVACAction,
-    FAN_DIFFUSE,
-    FAN_FOCUS,
-    HVACMode,
-    ClimateEntityFeature
-)
-
+from homeassistant.components.climate.const import FAN_DIFFUSE, FAN_FOCUS, ClimateEntityFeature, HVACAction, HVACMode
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import ATTR_TEMPERATURE, CONF_NAME, UnitOfTemperature
 from homeassistant.core import Callable, HomeAssistant
 
 from . import DysonEntity
+from .const import DATA_DEVICES, DOMAIN
+from .libdyson import DysonPureHotCoolLink
+from .utils import environmental_property
 
 _LOGGER = logging.getLogger(__name__)
 

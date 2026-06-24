@@ -4,20 +4,19 @@ import logging
 import math
 from typing import Any, Callable, List, Mapping, Optional
 
-from .libdyson import DysonPureCool, DysonPureCoolLink, MessageType
 import voluptuous as vol
-
 from homeassistant.components.fan import (
     DIRECTION_FORWARD,
     DIRECTION_REVERSE,
-    FanEntityFeature,
     FanEntity,
+    FanEntityFeature,
     NotValidPresetModeError,
 )
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_NAME
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers import config_validation as cv, entity_platform
+from homeassistant.helpers import config_validation as cv
+from homeassistant.helpers import entity_platform
 from homeassistant.util.percentage import (
     int_states_in_range,
     percentage_to_ranged_value,
@@ -26,6 +25,7 @@ from homeassistant.util.percentage import (
 
 from . import DOMAIN, DysonEntity
 from .const import DATA_DEVICES
+from .libdyson import DysonPureCool, DysonPureCoolLink, MessageType
 
 _LOGGER = logging.getLogger(__name__)
 

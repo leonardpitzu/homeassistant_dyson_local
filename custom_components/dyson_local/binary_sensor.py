@@ -2,16 +2,6 @@
 
 from typing import Callable, Optional
 
-from .libdyson import (
-    Dyson360Eye,
-    Dyson360Heurist,
-    Dyson360VisNav,
-    DysonPureHotCoolLink,
-    DysonPurifierHumidifyCool,
-    MessageType,
-)
-from .libdyson.dyson_device import DysonFanDevice
-
 from homeassistant.components.binary_sensor import (
     BinarySensorDeviceClass,
     BinarySensorEntity,
@@ -23,6 +13,15 @@ from homeassistant.helpers.entity import EntityCategory
 
 from . import DysonEntity
 from .const import DATA_DEVICES, DOMAIN
+from .libdyson import (
+    Dyson360Eye,
+    Dyson360Heurist,
+    Dyson360VisNav,
+    DysonPureHotCoolLink,
+    DysonPurifierHumidifyCool,
+    MessageType,
+)
+from .libdyson.dyson_device import DysonFanDevice
 
 ICON_BIN_FULL = "mdi:delete-variant"
 

@@ -2,23 +2,14 @@
 
 from typing import Any, Callable, List, Mapping
 
-from .libdyson import (
-    Dyson360Eye,
-    Dyson360VisNav,
-    VacuumEyePowerMode,
-    VacuumHeuristPowerMode,
-    VacuumVisNavPowerMode,
-    VacuumState,
-)
-
 from homeassistant.components.vacuum import (
     ATTR_STATUS,
     STATE_CLEANING,
     STATE_DOCKED,
     STATE_ERROR,
     STATE_RETURNING,
-    VacuumEntityFeature,
     StateVacuumEntity,
+    VacuumEntityFeature,
 )
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_NAME, STATE_PAUSED
@@ -26,6 +17,14 @@ from homeassistant.core import HomeAssistant
 
 from . import DysonEntity
 from .const import DATA_DEVICES, DOMAIN
+from .libdyson import (
+    Dyson360Eye,
+    Dyson360VisNav,
+    VacuumEyePowerMode,
+    VacuumHeuristPowerMode,
+    VacuumState,
+    VacuumVisNavPowerMode,
+)
 
 SUPPORTED_FEATURES = (
     VacuumEntityFeature.START

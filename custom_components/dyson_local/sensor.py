@@ -1,21 +1,8 @@
 """Sensor platform for dyson."""
 
-from typing import Callable, Union, Optional
+from typing import Callable, Optional
 
-from .libdyson import (
-    Dyson360Eye,
-    Dyson360Heurist,
-    Dyson360VisNav,
-    DysonDevice,
-    DysonPureCoolLink,
-    DysonPurifierHumidifyCool,
-    DysonBigQuiet,
-)
-
-from .libdyson.const import MessageType
-from .libdyson.dyson_device import DysonFanDevice
-
-from homeassistant.components.sensor import SensorDeviceClass, SensorStateClass, SensorEntity
+from homeassistant.components.sensor import SensorDeviceClass, SensorEntity, SensorStateClass
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import (
     CONCENTRATION_MICROGRAMS_PER_CUBIC_METER,
@@ -26,7 +13,6 @@ from homeassistant.const import (
     UnitOfTemperature,
     UnitOfTime,
 )
-
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity import EntityCategory
 from homeassistant.helpers.update_coordinator import (
@@ -36,7 +22,16 @@ from homeassistant.helpers.update_coordinator import (
 
 from . import DysonEntity
 from .const import DATA_COORDINATORS, DATA_DEVICES, DOMAIN
-from .utils import environmental_property
+from .libdyson import (
+    Dyson360Eye,
+    Dyson360Heurist,
+    Dyson360VisNav,
+    DysonBigQuiet,
+    DysonDevice,
+    DysonPureCoolLink,
+    DysonPurifierHumidifyCool,
+)
+from .libdyson.const import MessageType
 
 
 async def async_setup_entry(

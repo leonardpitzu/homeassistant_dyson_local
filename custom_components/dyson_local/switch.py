@@ -2,8 +2,6 @@
 
 from typing import Callable
 
-from .libdyson import DysonPureHotCoolLink
-
 from homeassistant.components.switch import SwitchEntity
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_NAME
@@ -12,6 +10,7 @@ from homeassistant.helpers.entity import EntityCategory
 
 from . import DysonEntity
 from .const import DATA_DEVICES, DOMAIN
+from .libdyson import DysonPureHotCoolLink
 
 
 async def async_setup_entry(

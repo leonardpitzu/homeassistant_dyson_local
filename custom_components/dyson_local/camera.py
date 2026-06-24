@@ -1,18 +1,17 @@
 """Camera platform for Dyson cloud."""
-from typing import Callable
 import logging
 from datetime import timedelta
+from typing import Callable
 
-from homeassistant.core import HomeAssistant
-from homeassistant.config_entries import ConfigEntry
 from homeassistant.components.camera import Camera
-
-from .libdyson.const import DEVICE_TYPE_360_EYE, DEVICE_TYPE_360_HEURIST
-from .libdyson.cloud.cloud_360_eye import DysonCloud360Eye
-from .libdyson.cloud import DysonDeviceInfo
+from homeassistant.config_entries import ConfigEntry
+from homeassistant.core import HomeAssistant
 
 from .cloud.const import DATA_ACCOUNT, DATA_DEVICES
 from .const import DOMAIN
+from .libdyson.cloud import DysonDeviceInfo
+from .libdyson.cloud.cloud_360_eye import DysonCloud360Eye
+from .libdyson.const import DEVICE_TYPE_360_EYE
 
 _LOGGER = logging.getLogger(__name__)
 
