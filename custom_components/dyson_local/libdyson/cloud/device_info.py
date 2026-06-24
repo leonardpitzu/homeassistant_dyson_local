@@ -21,6 +21,7 @@ from ..const import (  # noqa: F401
     DEVICE_TYPE_PURIFIER_COOL_M,
     DEVICE_TYPE_PURIFIER_HOT_COOL_E,
     DEVICE_TYPE_PURIFIER_HOT_COOL_K,
+    DEVICE_TYPE_PURIFIER_HOT_COOL_M,
     DEVICE_TYPE_PURIFIER_HUMIDIFY_COOL_E,
     DEVICE_TYPE_PURIFIER_HUMIDIFY_COOL_K,
 )
@@ -57,10 +58,10 @@ CLOUD_PRODUCT_TYPE_TO_DEVICE_TYPE = {
     "TP09": DEVICE_TYPE_PURE_COOL,  # All TP09 variants use DysonPureCool class
     "TP11": DEVICE_TYPE_PURE_COOL,  # All TP11 variants use DysonPureCool class
     "PC1": DEVICE_TYPE_PURE_COOL,  # All PC1 variants use DysonPureCool class
-    # Variant combinations for Cool series - all merged to use the same device type
-    "438K": DEVICE_TYPE_PURE_COOL,  # Merged: all 438 variants use same class
-    "438E": DEVICE_TYPE_PURE_COOL,  # Merged: all 438 variants use same class
-    "438M": DEVICE_TYPE_PURE_COOL,  # Merged: all 438 variants use same class
+    # Variant combinations for Cool series - variant preserved for the correct MQTT topic prefix
+    "438K": DEVICE_TYPE_PURIFIER_COOL_K,  # Variant preserved for correct MQTT topic
+    "438E": DEVICE_TYPE_PURIFIER_COOL_E,  # Variant preserved for correct MQTT topic
+    "438M": DEVICE_TYPE_PURIFIER_COOL_M,  # Variant preserved for correct MQTT topic
     # Pure Hot+Cool Link models
     "HP02": DEVICE_TYPE_PURE_HOT_COOL_LINK,
     "455": DEVICE_TYPE_PURE_HOT_COOL_LINK,
@@ -70,10 +71,10 @@ CLOUD_PRODUCT_TYPE_TO_DEVICE_TYPE = {
     # Purifier Hot+Cool models (newer) - all merged to use the same device type
     "HP07": DEVICE_TYPE_PURE_HOT_COOL,  # All HP07 variants use DysonPureHotCool class
     "HP09": DEVICE_TYPE_PURE_HOT_COOL,  # All HP09 variants use DysonPureHotCool class
-    # Variant combinations for Hot+Cool series - all merged to use the same device type
-    "527K": DEVICE_TYPE_PURE_HOT_COOL,  # Merged: all 527 variants use same class
-    "527E": DEVICE_TYPE_PURE_HOT_COOL,  # Merged: all 527 variants use same class
-    "527M": DEVICE_TYPE_PURE_HOT_COOL,  # Merged: all 527 variants use same class
+    # Variant combinations for Hot+Cool series - variant preserved for the correct MQTT topic prefix
+    "527K": DEVICE_TYPE_PURIFIER_HOT_COOL_K,  # Variant preserved for correct MQTT topic
+    "527E": DEVICE_TYPE_PURIFIER_HOT_COOL_E,  # Variant preserved for correct MQTT topic
+    "527M": DEVICE_TYPE_PURIFIER_HOT_COOL_M,  # Variant preserved for correct MQTT topic
     # Pure Humidify+Cool models - all variants use the same DysonPurifierHumidifyCool class
     "PH01": DEVICE_TYPE_PURE_HUMIDIFY_COOL,
     "PH02": DEVICE_TYPE_PURE_HUMIDIFY_COOL,
@@ -81,10 +82,10 @@ CLOUD_PRODUCT_TYPE_TO_DEVICE_TYPE = {
     # Purifier Humidify+Cool models (newer) - all merged to use the same device type
     "PH03": DEVICE_TYPE_PURE_HUMIDIFY_COOL,  # All PH03 variants use DysonPurifierHumidifyCool class
     "PH04": DEVICE_TYPE_PURE_HUMIDIFY_COOL,  # All PH04 variants use DysonPurifierHumidifyCool class
-    # Variant combinations for Humidify+Cool series - all merged to use the same device type
-    "358K": DEVICE_TYPE_PURE_HUMIDIFY_COOL,  # Merged: all 358 variants use same class
-    "358E": DEVICE_TYPE_PURE_HUMIDIFY_COOL,  # Merged: all 358 variants use same class
-    "358M": DEVICE_TYPE_PURE_HUMIDIFY_COOL,  # Merged: all 358 variants use same class
+    # Variant combinations for Humidify+Cool series - variant preserved for the correct MQTT topic prefix
+    "358K": DEVICE_TYPE_PURIFIER_HUMIDIFY_COOL_K,  # Variant preserved for correct MQTT topic
+    "358E": DEVICE_TYPE_PURIFIER_HUMIDIFY_COOL_E,  # Variant preserved for correct MQTT topic
+    "358M": DEVICE_TYPE_PURE_HUMIDIFY_COOL,  # No 358M variant constant; fall back to base class
     # Purifier Big+Quiet models
     "BP02": DEVICE_TYPE_PURIFIER_BIG_QUIET,
     "BP03": DEVICE_TYPE_PURIFIER_BIG_QUIET,

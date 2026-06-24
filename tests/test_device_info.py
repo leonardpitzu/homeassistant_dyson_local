@@ -16,6 +16,14 @@ from custom_components.dyson_local.libdyson.const import (
     DEVICE_TYPE_PURE_HOT_COOL,
     DEVICE_TYPE_PURE_HUMIDIFY_COOL,
     DEVICE_TYPE_PURIFIER_BIG_QUIET,
+    DEVICE_TYPE_PURIFIER_COOL_E,
+    DEVICE_TYPE_PURIFIER_COOL_K,
+    DEVICE_TYPE_PURIFIER_COOL_M,
+    DEVICE_TYPE_PURIFIER_HOT_COOL_E,
+    DEVICE_TYPE_PURIFIER_HOT_COOL_K,
+    DEVICE_TYPE_PURIFIER_HOT_COOL_M,
+    DEVICE_TYPE_PURIFIER_HUMIDIFY_COOL_E,
+    DEVICE_TYPE_PURIFIER_HUMIDIFY_COOL_K,
 )
 
 
@@ -30,6 +38,19 @@ class TestMapProductTypeToDeviceType:
         assert map_product_type_to_device_type("TP02") == DEVICE_TYPE_PURE_COOL_LINK
         assert map_product_type_to_device_type("HP04") == DEVICE_TYPE_PURE_HOT_COOL
         assert map_product_type_to_device_type("BP02") == DEVICE_TYPE_PURIFIER_BIG_QUIET
+
+    def test_complete_variant_type_preserved(self):
+        """Variant-suffixed ProductTypes must map to themselves for the correct MQTT topic."""
+        # Without a separate variant arg, a complete type like "358K" must NOT be
+        # downgraded to the base "358" - the MQTT topic prefix depends on it.
+        assert map_product_type_to_device_type("358K") == DEVICE_TYPE_PURIFIER_HUMIDIFY_COOL_K
+        assert map_product_type_to_device_type("358E") == DEVICE_TYPE_PURIFIER_HUMIDIFY_COOL_E
+        assert map_product_type_to_device_type("438K") == DEVICE_TYPE_PURIFIER_COOL_K
+        assert map_product_type_to_device_type("438E") == DEVICE_TYPE_PURIFIER_COOL_E
+        assert map_product_type_to_device_type("438M") == DEVICE_TYPE_PURIFIER_COOL_M
+        assert map_product_type_to_device_type("527K") == DEVICE_TYPE_PURIFIER_HOT_COOL_K
+        assert map_product_type_to_device_type("527E") == DEVICE_TYPE_PURIFIER_HOT_COOL_E
+        assert map_product_type_to_device_type("527M") == DEVICE_TYPE_PURIFIER_HOT_COOL_M
 
     def test_variant_based_mapping(self):
         """Test variant-based mappings for devices that need variant in MQTT topics."""
@@ -342,7 +363,8 @@ class TestDysonDeviceInfo:
             variant=None,
         )
 
-        assert device_info.get_device_type() == DEVICE_TYPE_PURE_HUMIDIFY_COOL
+        # A complete variant type must be preserved so the MQTT topic prefix is correct.
+        assert device_info.get_device_type() == DEVICE_TYPE_PURIFIER_HUMIDIFY_COOL_E
 
     def test_dataclass_frozen(self):
         """Test that DysonDeviceInfo is immutable (frozen)."""
