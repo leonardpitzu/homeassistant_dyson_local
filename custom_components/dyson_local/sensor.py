@@ -5,11 +5,10 @@ from typing import Callable, Optional
 from homeassistant.components.sensor import SensorDeviceClass, SensorEntity, SensorStateClass
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import (
-    CONCENTRATION_MICROGRAMS_PER_CUBIC_METER,
-    CONCENTRATION_MILLIGRAMS_PER_CUBIC_METER,
-    CONCENTRATION_PARTS_PER_MILLION,
     CONF_NAME,
     PERCENTAGE,
+    UnitOfDensity,
+    UnitOfRatio,
     UnitOfTemperature,
     UnitOfTime,
 )
@@ -286,7 +285,7 @@ class DysonPM25Sensor(DysonSensorEnvironmental):
     _SENSOR_TYPE = "pm25"
     _SENSOR_NAME = "PM 2.5"
     _attr_device_class = SensorDeviceClass.PM25
-    _attr_native_unit_of_measurement = CONCENTRATION_MICROGRAMS_PER_CUBIC_METER
+    _attr_native_unit_of_measurement = UnitOfDensity.MICROGRAMS_PER_CUBIC_METER
     _attr_state_class = SensorStateClass.MEASUREMENT
 
     @property
@@ -308,7 +307,7 @@ class DysonPM10Sensor(DysonSensorEnvironmental):
     _SENSOR_TYPE = "pm10"
     _SENSOR_NAME = "PM 10"
     _attr_device_class = SensorDeviceClass.PM10
-    _attr_native_unit_of_measurement = CONCENTRATION_MICROGRAMS_PER_CUBIC_METER
+    _attr_native_unit_of_measurement = UnitOfDensity.MICROGRAMS_PER_CUBIC_METER
     _attr_state_class = SensorStateClass.MEASUREMENT
 
     @property
@@ -392,7 +391,7 @@ class DysonHCHOSensor(DysonSensorEnvironmental):
     _SENSOR_TYPE = "hcho-mg"
     _SENSOR_NAME = "HCHO"
 
-    _attr_native_unit_of_measurement = CONCENTRATION_MILLIGRAMS_PER_CUBIC_METER
+    _attr_native_unit_of_measurement = UnitOfDensity.MILLIGRAMS_PER_CUBIC_METER
     _attr_state_class = SensorStateClass.MEASUREMENT
 
     @property
@@ -415,7 +414,7 @@ class DysonCarbonDioxideSensor(DysonSensorEnvironmental):
     _SENSOR_NAME = "Carbon Dioxide"
 
     _attr_device_class = SensorDeviceClass.CO2
-    _attr_native_unit_of_measurement = CONCENTRATION_PARTS_PER_MILLION
+    _attr_native_unit_of_measurement = UnitOfRatio.PARTS_PER_MILLION
     _attr_state_class = SensorStateClass.MEASUREMENT
 
     @property
