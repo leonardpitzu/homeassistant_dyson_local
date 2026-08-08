@@ -1,8 +1,11 @@
 """Fan platform for dyson."""
 
+from __future__ import annotations
+
 import logging
 import math
-from typing import Any, Callable, List, Mapping, Optional
+from collections.abc import Mapping
+from typing import Any
 
 import voluptuous as vol
 from homeassistant.components.fan import (
@@ -12,19 +15,18 @@ from homeassistant.components.fan import (
     FanEntityFeature,
     NotValidPresetModeError,
 )
-from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_NAME
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers import entity_platform
+from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 from homeassistant.util.percentage import (
     int_states_in_range,
     percentage_to_ranged_value,
     ranged_value_to_percentage,
 )
 
-from . import DOMAIN, DysonEntity
-from .const import DATA_DEVICES
+from . import DysonEntity, DysonLocalConfigEntry
 from .libdyson import DysonPureCool, DysonPureCoolLink, MessageType
 
 _LOGGER = logging.getLogger(__name__)
@@ -62,10 +64,12 @@ COMMON_FEATURES = (
 
 
 async def async_setup_entry(
-    hass: HomeAssistant, config_entry: ConfigEntry, async_add_entities: Callable
+    hass: HomeAssistant,
+    config_entry: DysonLocalConfigEntry,
+    async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up Dyson fan from a config entry."""
-    device = hass.data[DOMAIN][DATA_DEVICES][config_entry.entry_id]
+    device = config_entry.runtime_data.device
     name = config_entry.data[CONF_NAME]
     if isinstance(device, DysonPureCoolLink):
         entity = DysonPureCoolLinkEntity(device, name)
@@ -88,9 +92,11 @@ async def async_setup_entry(
 class DysonFanEntity(DysonEntity, FanEntity):
     """Dyson fan entity base class."""
 
-    _enable_turn_on_off_backwards_compatibility = False
-
     _MESSAGE_TYPE = MessageType.STATE
+
+    _attr_preset_modes = SUPPORTED_PRESET_MODES
+    _attr_speed_count = int_states_in_range(SPEED_RANGE)
+    _attr_supported_features = COMMON_FEATURES
 
     @property
     def is_on(self) -> bool:
@@ -98,17 +104,7 @@ class DysonFanEntity(DysonEntity, FanEntity):
         return self._device.is_on
 
     @property
-    def speed(self) -> None:
-        """Return None for compatibility with pre-preset_mode state."""
-        return None
-
-    @property
-    def speed_count(self) -> int:
-        """Return the number of different speeds the fan can be set to."""
-        return int_states_in_range(SPEED_RANGE)
-
-    @property
-    def percentage(self) -> Optional[int]:
+    def percentage(self) -> int | None:
         """Return the current speed percentage."""
         if self._device.speed is None or self._device.auto_mode:
             return None
@@ -127,17 +123,11 @@ class DysonFanEntity(DysonEntity, FanEntity):
         self._device.disable_auto_mode()
 
     @property
-    def preset_modes(self) -> List[str]:
-        """Return the preset modes supported."""
-        return SUPPORTED_PRESET_MODES
-
-    @property
-    def preset_mode(self) -> Optional[str]:
+    def preset_mode(self) -> str | None:
         """Return the current selected preset mode."""
         if self._device.auto_mode:
             return PRESET_MODE_AUTO
-        else:
-            return PRESET_MODE_NORMAL
+        return PRESET_MODE_NORMAL
 
     def set_preset_mode(self, preset_mode: str) -> None:
         """Configure the preset mode."""
@@ -149,19 +139,14 @@ class DysonFanEntity(DysonEntity, FanEntity):
             raise NotValidPresetModeError(f"Invalid preset mode: {preset_mode}")
 
     @property
-    def oscillating(self):
+    def oscillating(self) -> bool:
         """Return the oscillation state."""
         return self._device.oscillation
 
-    @property
-    def supported_features(self) -> int:
-        """Flag supported features."""
-        return COMMON_FEATURES
-
     def turn_on(
         self,
-        percentage: Optional[int] = None,
-        preset_mode: Optional[str] = None,
+        percentage: int | None = None,
+        preset_mode: str | None = None,
         **kwargs,
     ) -> None:
         """Turn on the fan."""
@@ -176,7 +161,7 @@ class DysonFanEntity(DysonEntity, FanEntity):
     def turn_off(self, **kwargs) -> None:
         """Turn off the fan."""
         _LOGGER.debug("Turn off fan %s", self.name)
-        return self._device.turn_off()
+        self._device.turn_off()
 
     def oscillate(self, oscillating: bool) -> None:
         """Turn on/of oscillation."""
@@ -201,18 +186,14 @@ class DysonPureCoolLinkEntity(DysonFanEntity):
 class DysonPureCoolEntity(DysonFanEntity):
     """Dyson Pure Cool entity."""
 
-    @property
-    def supported_features(self) -> int:
-        """Flag supported features."""
-        return COMMON_FEATURES | FanEntityFeature.DIRECTION
+    _attr_supported_features = COMMON_FEATURES | FanEntityFeature.DIRECTION
 
     @property
     def current_direction(self) -> str:
         """Return the current airflow direction."""
         if self._device.front_airflow:
             return DIRECTION_FORWARD
-        else:
-            return DIRECTION_REVERSE
+        return DIRECTION_REVERSE
 
     def set_direction(self, direction: str) -> None:
         """Configure the airflow direction."""
@@ -255,18 +236,14 @@ class DysonPureCoolEntity(DysonFanEntity):
 class DysonPurifierHumidifyCoolEntity(DysonFanEntity):
     """Dyson Pure Humidify+Cool entity."""
 
-    @property
-    def supported_features(self) -> int:
-        """Flag supported features."""
-        return COMMON_FEATURES | FanEntityFeature.DIRECTION
+    _attr_supported_features = COMMON_FEATURES | FanEntityFeature.DIRECTION
 
     @property
     def current_direction(self) -> str:
         """Return the current airflow direction."""
         if self._device.front_airflow:
             return DIRECTION_FORWARD
-        else:
-            return DIRECTION_REVERSE
+        return DIRECTION_REVERSE
 
     def set_direction(self, direction: str) -> None:
         """Configure the airflow direction."""
@@ -276,3 +253,4 @@ class DysonPurifierHumidifyCoolEntity(DysonFanEntity):
             self._device.disable_front_airflow()
         else:
             raise ValueError(f"Invalid direction {direction}")
+

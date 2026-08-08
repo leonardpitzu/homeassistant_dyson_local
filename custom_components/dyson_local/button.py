@@ -1,30 +1,26 @@
+"""Button platform for dyson."""
 
-import logging
-from typing import Callable, Optional
+from __future__ import annotations
 
 from homeassistant.components.button import ButtonEntity
-from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import CONF_NAME
+from homeassistant.const import CONF_NAME, EntityCategory
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers.entity import EntityCategory
+from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
-from . import DysonEntity
-from .const import DATA_DEVICES, DOMAIN
+from . import DysonEntity, DysonLocalConfigEntry
 from .libdyson.dyson_device import DysonFanDevice
-
-_LOGGER = logging.getLogger(__name__)
 
 
 async def async_setup_entry(
-    hass: HomeAssistant, config_entry: ConfigEntry, async_add_entities: Callable
+    hass: HomeAssistant,
+    config_entry: DysonLocalConfigEntry,
+    async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up Dyson button from a config entry."""
-    device = hass.data[DOMAIN][DATA_DEVICES][config_entry.entry_id]
+    device = config_entry.runtime_data.device
     name = config_entry.data[CONF_NAME]
 
-
     entities = []
-
     if isinstance(device, DysonFanDevice):
         entities.append(DysonFilterResetButton(device, name))
 
@@ -32,17 +28,13 @@ async def async_setup_entry(
 
 
 class DysonFilterResetButton(DysonEntity, ButtonEntity):
+    """Dyson filter life reset button."""
+
     _attr_entity_category = EntityCategory.CONFIG
-
-    @property
-    def sub_name(self) -> Optional[str]:
-        """Return the name of the Dyson button."""
-        return "Reset Filter Life"
-
-    @property
-    def sub_unique_id(self) -> str:
-        """Return the button's unique id."""
-        return "reset-filter"
+    _sub_name = "Reset Filter Life"
+    _sub_unique_id = "reset-filter"
 
     def press(self) -> None:
+        """Reset the filter life counter."""
         self._device.reset_filter()
+

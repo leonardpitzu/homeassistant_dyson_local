@@ -1,15 +1,13 @@
 """Select platform for dyson."""
 
-from typing import Callable
+from __future__ import annotations
 
 from homeassistant.components.select import SelectEntity
-from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import CONF_NAME
+from homeassistant.const import CONF_NAME, EntityCategory
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers.entity import EntityCategory
+from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
-from . import DysonEntity
-from .const import DATA_DEVICES, DOMAIN
+from . import DysonEntity, DysonLocalConfigEntry
 from .libdyson import (
     DysonBigQuiet,
     DysonPureCoolLink,
@@ -67,15 +65,15 @@ WATER_HARDNESS_ENUM_TO_STR = {
 
 
 async def async_setup_entry(
-    hass: HomeAssistant, config_entry: ConfigEntry, async_add_entities: Callable
+    hass: HomeAssistant,
+    config_entry: DysonLocalConfigEntry,
+    async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up Dyson sensor from a config entry."""
-    device = hass.data[DOMAIN][DATA_DEVICES][config_entry.entry_id]
+    device = config_entry.runtime_data.device
     name = config_entry.data[CONF_NAME]
     entities = []
-    if isinstance(device, DysonPureHotCoolLink) or isinstance(
-        device, DysonPureCoolLink
-    ):
+    if isinstance(device, (DysonPureHotCoolLink, DysonPureCoolLink)):
         entities.append(DysonAirQualitySelect(device, name))
     if isinstance(device, DysonPurifierHumidifyCool):
         entities.extend(
@@ -97,7 +95,9 @@ class DysonAirQualitySelect(DysonEntity, SelectEntity):
     """Air quality target for supported models."""
 
     _attr_entity_category = EntityCategory.CONFIG
-    _attr_options = list(AIR_QUALITY_TARGET_STR_TO_ENUM.keys())
+    _attr_options = list(AIR_QUALITY_TARGET_STR_TO_ENUM)
+    _sub_name = "Air Quality"
+    _sub_unique_id = "air_quality"
 
     @property
     def current_option(self) -> str:
@@ -108,23 +108,15 @@ class DysonAirQualitySelect(DysonEntity, SelectEntity):
         """Configure the new selected option."""
         self._device.set_air_quality_target(AIR_QUALITY_TARGET_STR_TO_ENUM[option])
 
-    @property
-    def sub_name(self) -> str:
-        """Return the name of the select."""
-        return "Air Quality"
-
-    @property
-    def sub_unique_id(self):
-        """Return the select's unique id."""
-        return "air_quality"
-
 
 class DysonOscillationModeSelect(DysonEntity, SelectEntity):
     """Oscillation mode for supported models."""
 
     _attr_entity_category = EntityCategory.CONFIG
     _attr_icon = "mdi:sync"
-    _attr_options = list(OSCILLATION_MODE_STR_TO_ENUM.keys())
+    _attr_options = list(OSCILLATION_MODE_STR_TO_ENUM)
+    _sub_name = "Oscillation Mode"
+    _sub_unique_id = "oscillation_mode"
 
     @property
     def current_option(self) -> str:
@@ -135,22 +127,15 @@ class DysonOscillationModeSelect(DysonEntity, SelectEntity):
         """Configure the new selected option."""
         self._device.enable_oscillation(OSCILLATION_MODE_STR_TO_ENUM[option])
 
-    @property
-    def sub_name(self) -> str:
-        """Return the name of the select."""
-        return "Oscillation Mode"
-
-    @property
-    def sub_unique_id(self):
-        """Return the select's unique id."""
-        return "oscillation_mode"
 
 class DysonTiltSelect(DysonEntity, SelectEntity):
     """Tilt for supported models."""
 
     _attr_entity_category = EntityCategory.CONFIG
     _attr_icon = "mdi:acute-angle"
-    _attr_options = list(TILT_STR_TO_ENUM.keys())
+    _attr_options = list(TILT_STR_TO_ENUM)
+    _sub_name = "Tilt"
+    _sub_unique_id = "tilt"
 
     @property
     def current_option(self) -> str:
@@ -161,39 +146,21 @@ class DysonTiltSelect(DysonEntity, SelectEntity):
         """Configure the new selected option."""
         self._device.set_tilt(TILT_STR_TO_ENUM[option])
 
-    @property
-    def sub_name(self) -> str:
-        """Return the name of the select."""
-        return "Tilt"
-
-    @property
-    def sub_unique_id(self):
-        """Return the select's unique id."""
-        return "tilt"
-
 
 class DysonWaterHardnessSelect(DysonEntity, SelectEntity):
     """Dyson Pure Humidify+Cool Water Hardness Select."""
 
     _attr_entity_category = EntityCategory.CONFIG
     _attr_icon = "mdi:water-opacity"
-    _attr_options = list(WATER_HARDNESS_STR_TO_ENUM.keys())
+    _attr_options = list(WATER_HARDNESS_STR_TO_ENUM)
+    _sub_name = "Water Hardness"
+    _sub_unique_id = "water_hardness"
 
     @property
     def current_option(self) -> str:
-        """Configure the new selected option."""
+        """Return the current selected option."""
         return WATER_HARDNESS_ENUM_TO_STR[self._device.water_hardness]
 
     def select_option(self, option: str) -> None:
         """Configure the new selected option."""
         self._device.set_water_hardness(WATER_HARDNESS_STR_TO_ENUM[option])
-
-    @property
-    def sub_name(self) -> str:
-        """Return the name of the select."""
-        return "Water Hardness"
-
-    @property
-    def sub_unique_id(self):
-        """Return the select's unique id."""
-        return "water_hardness"

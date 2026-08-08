@@ -1,16 +1,16 @@
 """Dyson climate platform."""
 
+from __future__ import annotations
+
 import logging
-from typing import List, Optional
 
 from homeassistant.components.climate import ClimateEntity
 from homeassistant.components.climate.const import FAN_DIFFUSE, FAN_FOCUS, ClimateEntityFeature, HVACAction, HVACMode
-from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import ATTR_TEMPERATURE, CONF_NAME, UnitOfTemperature
-from homeassistant.core import Callable, HomeAssistant
+from homeassistant.core import HomeAssistant
+from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
-from . import DysonEntity
-from .const import DATA_DEVICES, DOMAIN
+from . import DysonEntity, DysonLocalConfigEntry
 from .libdyson import DysonPureHotCoolLink
 from .utils import environmental_property
 
@@ -23,10 +23,12 @@ SUPPORT_FLAGS_LINK = SUPPORT_FLAGS | ClimateEntityFeature.FAN_MODE
 
 
 async def async_setup_entry(
-    hass: HomeAssistant, config_entry: ConfigEntry, async_add_entities: Callable
+    hass: HomeAssistant,
+    config_entry: DysonLocalConfigEntry,
+    async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up Dyson climate from a config entry."""
-    device = hass.data[DOMAIN][DATA_DEVICES][config_entry.entry_id]
+    device = config_entry.runtime_data.device
     name = config_entry.data[CONF_NAME]
     if isinstance(device, DysonPureHotCoolLink):
         entity = DysonPureHotCoolLinkEntity(device, name)
@@ -38,10 +40,14 @@ async def async_setup_entry(
 class DysonClimateEntity(DysonEntity, ClimateEntity):
     """Dyson climate entity base class."""
 
-    _enable_turn_on_off_backwards_compatibility = False
+    _attr_hvac_modes = HVAC_MODES
+    _attr_max_temp = 37
+    _attr_min_temp = 1
+    _attr_supported_features = SUPPORT_FLAGS
+    _attr_temperature_unit = UnitOfTemperature.CELSIUS
 
     @property
-    def hvac_mode(self) -> str:
+    def hvac_mode(self) -> HVACMode:
         """Return hvac operation."""
         if not self._device.is_on:
             return HVACMode.OFF
@@ -50,12 +56,7 @@ class DysonClimateEntity(DysonEntity, ClimateEntity):
         return HVACMode.COOL
 
     @property
-    def hvac_modes(self) -> List[str]:
-        """Return the list of available hvac operation modes."""
-        return HVAC_MODES
-
-    @property
-    def hvac_action(self) -> str:
+    def hvac_action(self) -> HVACAction:
         """Return the current running hvac operation."""
         if not self._device.is_on:
             return HVACAction.OFF
@@ -65,21 +66,13 @@ class DysonClimateEntity(DysonEntity, ClimateEntity):
             return HVACAction.IDLE
         return HVACAction.COOLING
 
-    @property
-    def supported_features(self) -> int:
-        """Return the list of supported features."""
-        return SUPPORT_FLAGS
-
     def turn_on(self) -> None:
+        """Turn the device on."""
         self._device.turn_on()
 
     def turn_off(self) -> None:
+        """Turn the device off."""
         self._device.turn_off()
-
-    @property
-    def temperature_unit(self) -> str:
-        """Return the unit of measurement."""
-        return UnitOfTemperature.CELSIUS
 
     @property
     def target_temperature(self) -> int:
@@ -92,7 +85,7 @@ class DysonClimateEntity(DysonEntity, ClimateEntity):
         return self._device.temperature
 
     @property
-    def current_temperature(self) -> Optional[int]:
+    def current_temperature(self) -> float | None:
         """Return the current temperature."""
         temperature_kelvin = self._current_temperature_kelvin
         if isinstance(temperature_kelvin, str):
@@ -104,16 +97,6 @@ class DysonClimateEntity(DysonEntity, ClimateEntity):
         """Return the current humidity."""
         return self._device.humidity
 
-    @property
-    def min_temp(self):
-        """Return the minimum temperature."""
-        return 1
-
-    @property
-    def max_temp(self):
-        """Return the maximum temperature."""
-        return 37
-
     def set_temperature(self, **kwargs):
         """Set new target temperature."""
         target_temp = kwargs.get(ATTR_TEMPERATURE)
@@ -123,13 +106,13 @@ class DysonClimateEntity(DysonEntity, ClimateEntity):
             return
         # Limit the target temperature into acceptable range
         if target_temp < self.min_temp or target_temp > self.max_temp:
-            _LOGGER.warning('Temperature requested is outside min/max range, adjusting')
+            _LOGGER.warning("Temperature requested is outside min/max range, adjusting")
             target_temp = min(self.max_temp, target_temp)
             target_temp = max(self.min_temp, target_temp)
         _LOGGER.debug("Set %s temperature %s", self.name, target_temp)
         self._device.set_heat_target(target_temp + 273)
 
-    def set_hvac_mode(self, hvac_mode: str):
+    def set_hvac_mode(self, hvac_mode: HVACMode):
         """Set new hvac mode."""
         _LOGGER.debug("Set %s heat mode %s", self.name, hvac_mode)
         if hvac_mode == HVACMode.OFF:
@@ -145,22 +128,15 @@ class DysonClimateEntity(DysonEntity, ClimateEntity):
 class DysonPureHotCoolLinkEntity(DysonClimateEntity):
     """Dyson Pure Hot+Cool Link entity."""
 
+    _attr_fan_modes = FAN_MODES
+    _attr_supported_features = SUPPORT_FLAGS_LINK
+
     @property
     def fan_mode(self) -> str:
         """Return the fan setting."""
         if self._device.focus_mode:
             return FAN_FOCUS
         return FAN_DIFFUSE
-
-    @property
-    def fan_modes(self) -> List[str]:
-        """Return the list of available fan modes."""
-        return FAN_MODES
-
-    @property
-    def supported_features(self) -> int:
-        """Return the list of supported features."""
-        return SUPPORT_FLAGS_LINK
 
     def set_fan_mode(self, fan_mode: str) -> None:
         """Set fan mode of the device."""
@@ -173,3 +149,4 @@ class DysonPureHotCoolLinkEntity(DysonClimateEntity):
 
 class DysonPureHotCoolEntity(DysonClimateEntity):
     """Dyson Pure Hot+Cool entity."""
+

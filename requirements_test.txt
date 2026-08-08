@@ -1,2 +1,4 @@
-pytest-homeassistant-custom-component==0.13.322
+pytest-homeassistant-custom-component==0.13.354
 ruff==0.16.1
+# homeassistant.components.camera imports it at module level
+PyTurboJPEG

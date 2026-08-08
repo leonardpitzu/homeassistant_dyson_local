@@ -1,22 +1,21 @@
 """Vacuum platform for Dyson."""
 
-from typing import Any, Callable, List, Mapping
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import Any
 
 from homeassistant.components.vacuum import (
     ATTR_STATUS,
-    STATE_CLEANING,
-    STATE_DOCKED,
-    STATE_ERROR,
-    STATE_RETURNING,
     StateVacuumEntity,
+    VacuumActivity,
     VacuumEntityFeature,
 )
-from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import CONF_NAME, STATE_PAUSED
+from homeassistant.const import CONF_NAME
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
-from . import DysonEntity
-from .const import DATA_DEVICES, DOMAIN
+from . import DysonEntity, DysonLocalConfigEntry
 from .libdyson import (
     Dyson360Eye,
     Dyson360VisNav,
@@ -72,40 +71,40 @@ DYSON_STATUS = {
     VacuumState.MACHINE_OFF: "Off",
 }
 
-DYSON_STATES = {
-    VacuumState.FAULT_CALL_HELPLINE: STATE_ERROR,
-    VacuumState.FAULT_CONTACT_HELPLINE: STATE_ERROR,
-    VacuumState.FAULT_CRITICAL: STATE_ERROR,
-    VacuumState.FAULT_GETTING_INFO: STATE_ERROR,
-    VacuumState.FAULT_LOST: STATE_ERROR,
-    VacuumState.FAULT_ON_DOCK: STATE_ERROR,
-    VacuumState.FAULT_ON_DOCK_CHARGED: STATE_ERROR,
-    VacuumState.FAULT_ON_DOCK_CHARGING: STATE_ERROR,
-    VacuumState.FAULT_REPLACE_ON_DOCK: STATE_ERROR,
-    VacuumState.FAULT_RETURN_TO_DOCK: STATE_ERROR,
-    VacuumState.FAULT_RUNNING_DIAGNOSTIC: STATE_ERROR,
-    VacuumState.FAULT_USER_RECOVERABLE: STATE_ERROR,
-    VacuumState.FULL_CLEAN_ABANDONED: STATE_RETURNING,
-    VacuumState.FULL_CLEAN_ABORTED: STATE_RETURNING,
-    VacuumState.FULL_CLEAN_CHARGING: STATE_DOCKED,
-    VacuumState.FULL_CLEAN_DISCOVERING: STATE_CLEANING,
-    VacuumState.FULL_CLEAN_FINISHED: STATE_DOCKED,
-    VacuumState.FULL_CLEAN_INITIATED: STATE_CLEANING,
-    VacuumState.FULL_CLEAN_NEEDS_CHARGE: STATE_RETURNING,
-    VacuumState.FULL_CLEAN_PAUSED: STATE_PAUSED,
-    VacuumState.FULL_CLEAN_RUNNING: STATE_CLEANING,
-    VacuumState.FULL_CLEAN_TRAVERSING: STATE_CLEANING,
-    VacuumState.INACTIVE_CHARGED: STATE_DOCKED,
-    VacuumState.INACTIVE_CHARGING: STATE_DOCKED,
-    VacuumState.INACTIVE_DISCHARGING: STATE_DOCKED,
-    VacuumState.MAPPING_ABORTED: STATE_RETURNING,
-    VacuumState.MAPPING_CHARGING: STATE_PAUSED,
-    VacuumState.MAPPING_FINISHED: STATE_CLEANING,
-    VacuumState.MAPPING_INITIATED: STATE_CLEANING,
-    VacuumState.MAPPING_NEEDS_CHARGE: STATE_RETURNING,
-    VacuumState.MAPPING_PAUSED: STATE_PAUSED,
-    VacuumState.MAPPING_RUNNING: STATE_CLEANING,
-    VacuumState.MACHINE_OFF: STATE_DOCKED,
+DYSON_ACTIVITIES = {
+    VacuumState.FAULT_CALL_HELPLINE: VacuumActivity.ERROR,
+    VacuumState.FAULT_CONTACT_HELPLINE: VacuumActivity.ERROR,
+    VacuumState.FAULT_CRITICAL: VacuumActivity.ERROR,
+    VacuumState.FAULT_GETTING_INFO: VacuumActivity.ERROR,
+    VacuumState.FAULT_LOST: VacuumActivity.ERROR,
+    VacuumState.FAULT_ON_DOCK: VacuumActivity.ERROR,
+    VacuumState.FAULT_ON_DOCK_CHARGED: VacuumActivity.ERROR,
+    VacuumState.FAULT_ON_DOCK_CHARGING: VacuumActivity.ERROR,
+    VacuumState.FAULT_REPLACE_ON_DOCK: VacuumActivity.ERROR,
+    VacuumState.FAULT_RETURN_TO_DOCK: VacuumActivity.ERROR,
+    VacuumState.FAULT_RUNNING_DIAGNOSTIC: VacuumActivity.ERROR,
+    VacuumState.FAULT_USER_RECOVERABLE: VacuumActivity.ERROR,
+    VacuumState.FULL_CLEAN_ABANDONED: VacuumActivity.RETURNING,
+    VacuumState.FULL_CLEAN_ABORTED: VacuumActivity.RETURNING,
+    VacuumState.FULL_CLEAN_CHARGING: VacuumActivity.DOCKED,
+    VacuumState.FULL_CLEAN_DISCOVERING: VacuumActivity.CLEANING,
+    VacuumState.FULL_CLEAN_FINISHED: VacuumActivity.DOCKED,
+    VacuumState.FULL_CLEAN_INITIATED: VacuumActivity.CLEANING,
+    VacuumState.FULL_CLEAN_NEEDS_CHARGE: VacuumActivity.RETURNING,
+    VacuumState.FULL_CLEAN_PAUSED: VacuumActivity.PAUSED,
+    VacuumState.FULL_CLEAN_RUNNING: VacuumActivity.CLEANING,
+    VacuumState.FULL_CLEAN_TRAVERSING: VacuumActivity.CLEANING,
+    VacuumState.INACTIVE_CHARGED: VacuumActivity.DOCKED,
+    VacuumState.INACTIVE_CHARGING: VacuumActivity.DOCKED,
+    VacuumState.INACTIVE_DISCHARGING: VacuumActivity.DOCKED,
+    VacuumState.MAPPING_ABORTED: VacuumActivity.RETURNING,
+    VacuumState.MAPPING_CHARGING: VacuumActivity.PAUSED,
+    VacuumState.MAPPING_FINISHED: VacuumActivity.CLEANING,
+    VacuumState.MAPPING_INITIATED: VacuumActivity.CLEANING,
+    VacuumState.MAPPING_NEEDS_CHARGE: VacuumActivity.RETURNING,
+    VacuumState.MAPPING_PAUSED: VacuumActivity.PAUSED,
+    VacuumState.MAPPING_RUNNING: VacuumActivity.CLEANING,
+    VacuumState.MACHINE_OFF: VacuumActivity.DOCKED,
 }
 
 EYE_POWER_MODE_ENUM_TO_STR = {
@@ -137,10 +136,12 @@ ATTR_POSITION = "position"
 
 
 async def async_setup_entry(
-    hass: HomeAssistant, config_entry: ConfigEntry, async_add_entities: Callable
+    hass: HomeAssistant,
+    config_entry: DysonLocalConfigEntry,
+    async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up Dyson vacuum from a config entry."""
-    device = hass.data[DOMAIN][DATA_DEVICES][config_entry.entry_id]
+    device = config_entry.runtime_data.device
     name = config_entry.data[CONF_NAME]
     if isinstance(device, Dyson360Eye):
         entity = Dyson360EyeEntity(device, name)
@@ -154,16 +155,19 @@ async def async_setup_entry(
 class DysonVacuumEntity(DysonEntity, StateVacuumEntity):
     """Dyson vacuum entity base class."""
 
+    _attr_supported_features = SUPPORTED_FEATURES
+
     @property
-    def state(self) -> str:
-        """Return the state of the vacuum."""
-        return DYSON_STATES[self._device.state]
+    def activity(self) -> VacuumActivity:
+        """Return the current vacuum activity."""
+        return DYSON_ACTIVITIES[self._device.state]
 
     @property
     def status(self) -> str:
         """Return the status of the vacuum."""
         return DYSON_STATUS[self._device.state]
 
+    # Deprecated upstream, kept so the battery_level state attribute survives.
     @property
     def battery_level(self) -> int:
         """Return the battery level of the vacuum cleaner."""
@@ -173,11 +177,6 @@ class DysonVacuumEntity(DysonEntity, StateVacuumEntity):
     def available(self) -> bool:
         """Return True if entity is available."""
         return self._device.is_connected
-
-    @property
-    def supported_features(self) -> int:
-        """Flag vacuum cleaner robot features that are supported."""
-        return SUPPORTED_FEATURES
 
     @property
     def extra_state_attributes(self) -> Mapping[str, Any]:
@@ -199,19 +198,16 @@ class DysonVacuumEntity(DysonEntity, StateVacuumEntity):
 class Dyson360EyeEntity(DysonVacuumEntity):
     """Dyson 360 Eye robot vacuum entity."""
 
+    _attr_fan_speed_list = list(EYE_POWER_MODE_STR_TO_ENUM)
+
     @property
     def fan_speed(self) -> str:
         """Return the fan speed of the vacuum cleaner."""
         return EYE_POWER_MODE_ENUM_TO_STR[self._device.power_mode]
 
-    @property
-    def fan_speed_list(self) -> List[str]:
-        """Get the list of available fan speed steps of the vacuum cleaner."""
-        return list(EYE_POWER_MODE_STR_TO_ENUM.keys())
-
     def start(self) -> None:
         """Start the device."""
-        if self.state == STATE_PAUSED:
+        if self.activity is VacuumActivity.PAUSED:
             self._device.resume()
         else:
             self._device.start()
@@ -224,19 +220,16 @@ class Dyson360EyeEntity(DysonVacuumEntity):
 class Dyson360HeuristEntity(DysonVacuumEntity):
     """Dyson 360 Heurist robot vacuum entity."""
 
+    _attr_fan_speed_list = list(HEURIST_POWER_MODE_STR_TO_ENUM)
+
     @property
     def fan_speed(self) -> str:
         """Return the fan speed of the vacuum cleaner."""
         return HEURIST_POWER_MODE_ENUM_TO_STR[self._device.current_power_mode]
 
-    @property
-    def fan_speed_list(self) -> List[str]:
-        """Get the list of available fan speed steps of the vacuum cleaner."""
-        return list(HEURIST_POWER_MODE_STR_TO_ENUM.keys())
-
     def start(self) -> None:
         """Start the device."""
-        if self.state == STATE_PAUSED:
+        if self.activity is VacuumActivity.PAUSED:
             self._device.resume()
         else:
             self._device.start_all_zones()
@@ -249,15 +242,12 @@ class Dyson360HeuristEntity(DysonVacuumEntity):
 class Dyson360VisNavEntity(Dyson360HeuristEntity):
     """Dyson 360 Vis Nav robot vacuum entity."""
 
+    _attr_fan_speed_list = list(VIS_NAV_POWER_MODE_STR_TO_ENUM)
+
     @property
     def fan_speed(self) -> str:
         """Return the fan speed of the vacuum cleaner."""
         return VIS_NAV_POWER_MODE_ENUM_TO_STR[self._device.current_power_mode]
-
-    @property
-    def fan_speed_list(self) -> List[str]:
-        """Get the list of available fan speed steps of the vacuum cleaner."""
-        return list(VIS_NAV_POWER_MODE_STR_TO_ENUM.keys())
 
     def set_fan_speed(self, fan_speed: str, **kwargs) -> None:
         """Set fan speed."""

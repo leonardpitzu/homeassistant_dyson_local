@@ -1,6 +1,6 @@
 """Humidifier platform for Dyson."""
 
-from typing import Callable, Optional
+from __future__ import annotations
 
 from homeassistant.components.humidifier import (
     HumidifierDeviceClass,
@@ -8,24 +8,23 @@ from homeassistant.components.humidifier import (
     HumidifierEntityFeature,
 )
 from homeassistant.components.humidifier.const import MODE_AUTO, MODE_NORMAL
-from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_NAME
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
-from . import DysonEntity
-from .const import DATA_DEVICES, DOMAIN
+from . import DysonEntity, DysonLocalConfigEntry
 from .libdyson import MessageType
 
 AVAILABLE_MODES = [MODE_NORMAL, MODE_AUTO]
 
-SUPPORTED_FEATURES = HumidifierEntityFeature.MODES
-
 
 async def async_setup_entry(
-    hass: HomeAssistant, config_entry: ConfigEntry, async_add_entities: Callable
+    hass: HomeAssistant,
+    config_entry: DysonLocalConfigEntry,
+    async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up Dyson humidifier from a config entry."""
-    device = hass.data[DOMAIN][DATA_DEVICES][config_entry.entry_id]
+    device = config_entry.runtime_data.device
     name = config_entry.data[CONF_NAME]
     async_add_entities([DysonHumidifierEntity(device, name)])
 
@@ -47,7 +46,7 @@ class DysonHumidifierEntity(DysonEntity, HumidifierEntity):
         return self._device.humidification
 
     @property
-    def target_humidity(self) -> Optional[int]:
+    def target_humidity(self) -> int | None:
         """Return the target."""
         if self._device.humidification_auto_mode:
             return None

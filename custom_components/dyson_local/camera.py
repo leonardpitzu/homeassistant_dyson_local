@@ -1,13 +1,16 @@
 """Camera platform for Dyson cloud."""
+
+from __future__ import annotations
+
 import logging
 from datetime import timedelta
-from typing import Callable
 
 from homeassistant.components.camera import Camera
-from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers.device_registry import DeviceInfo
+from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
-from .cloud.const import DATA_ACCOUNT, DATA_DEVICES
+from . import DysonCloudConfigEntry
 from .const import DOMAIN
 from .libdyson.cloud import DysonDeviceInfo
 from .libdyson.cloud.cloud_360_eye import DysonCloud360Eye
@@ -19,64 +22,48 @@ SCAN_INTERVAL = timedelta(minutes=30)
 
 
 async def async_setup_entry(
-    hass: HomeAssistant, config_entry: ConfigEntry, async_add_entities: Callable
+    hass: HomeAssistant,
+    config_entry: DysonCloudConfigEntry,
+    async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
-    """Set up Dyson fan from a config entry."""
-    data = hass.data[DOMAIN][config_entry.entry_id]
-    account = data[DATA_ACCOUNT]
-    devices = data[DATA_DEVICES]
-    entities = []
-    for device in devices:
-        if device.product_type not in [DEVICE_TYPE_360_EYE]:
-            continue
-        entities.append(DysonCleaningMapEntity(
-            DysonCloud360Eye(account, device.serial),
-            device,
-        ))
+    """Set up Dyson cleaning map cameras from a config entry."""
+    data = config_entry.runtime_data
+    entities = [
+        DysonCleaningMapEntity(DysonCloud360Eye(data.account, device.serial), device)
+        for device in data.devices
+        if device.product_type == DEVICE_TYPE_360_EYE
+    ]
     async_add_entities(entities, True)
 
 
 class DysonCleaningMapEntity(Camera):
     """Dyson vacuum cleaning map entity."""
 
-    def __init__(self, device: DysonCloud360Eye, device_info: DysonDeviceInfo):
+    _attr_icon = "mdi:map"
+
+    def __init__(self, device: DysonCloud360Eye, device_info: DysonDeviceInfo) -> None:
+        """Initialize the entity."""
         super().__init__()
         self._device = device
         self._device_info = device_info
         self._last_cleaning_task = None
         self._image = None
+        self._attr_name = f"{device_info.name} Cleaning Map"
+        self._attr_unique_id = device_info.serial
+        self._attr_device_info = DeviceInfo(
+            identifiers={(DOMAIN, device_info.serial)},
+            manufacturer="Dyson",
+            model=device_info.product_type,
+            name=device_info.name,
+            serial_number=device_info.serial,
+            sw_version=device_info.version,
+        )
 
-    @property
-    def name(self) -> str:
-        """Return entity name."""
-        return f"{self._device_info.name} Cleaning Map"
-
-    @property
-    def unique_id(self) -> str:
-        """Return entity unique id."""
-        return self._device_info.serial
-
-    @property
-    def device_info(self) -> dict:
-        """Return device info of the entity."""
-        return {
-            "identifiers": {(DOMAIN, self._device_info.serial)},
-            "name": self._device_info.name,
-            "manufacturer": "Dyson",
-            "model": self._device_info.product_type,
-            "sw_version": self._device_info.version,
-        }
-
-    @property
-    def icon(self) -> str:
-        """Return entity icon."""
-        return "mdi:map"
-
-    def camera_image(self, width=None, height=None):
+    def camera_image(self, width: int | None = None, height: int | None = None) -> bytes | None:
         """Return cleaning map. Width and height are ignored."""
         return self._image
 
-    def update(self):
+    def update(self) -> None:
         """Check for map update."""
         _LOGGER.debug("Running cleaning map update for %s", self._device_info.name)
         cleaning_tasks = self._device.get_cleaning_history()
@@ -96,6 +83,5 @@ class DysonCleaningMapEntity(Camera):
             _LOGGER.debug("Cleaning task not changed. Skip update.")
             return
         self._last_cleaning_task = last_task
-        self._image = self._device.get_cleaning_map(
-            self._last_cleaning_task.cleaning_id
-        )
+        self._image = self._device.get_cleaning_map(self._last_cleaning_task.cleaning_id)
+
