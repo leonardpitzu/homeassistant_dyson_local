@@ -72,17 +72,9 @@ class TestMapProductTypeToDeviceType:
     def test_variant_with_unknown_combination(self):
         """Test variant handling when combination is not in mapping."""
         # Unknown variant should fall back to base type
-        assert (
-            map_product_type_to_device_type("438", variant="X") == DEVICE_TYPE_PURE_COOL
-        )
-        assert (
-            map_product_type_to_device_type("527", variant="Z")
-            == DEVICE_TYPE_PURE_HOT_COOL
-        )
-        assert (
-            map_product_type_to_device_type("358", variant="Y")
-            == DEVICE_TYPE_PURE_HUMIDIFY_COOL
-        )
+        assert map_product_type_to_device_type("438", variant="X") == DEVICE_TYPE_PURE_COOL
+        assert map_product_type_to_device_type("527", variant="Z") == DEVICE_TYPE_PURE_HOT_COOL
+        assert map_product_type_to_device_type("358", variant="Y") == DEVICE_TYPE_PURE_HUMIDIFY_COOL
 
     def test_empty_or_none_product_type(self):
         """Test handling of empty or None product type."""
@@ -91,17 +83,9 @@ class TestMapProductTypeToDeviceType:
 
     def test_already_internal_device_type(self):
         """Test when product type is already an internal device type code."""
-        assert (
-            map_product_type_to_device_type(DEVICE_TYPE_360_EYE) == DEVICE_TYPE_360_EYE
-        )
-        assert (
-            map_product_type_to_device_type(DEVICE_TYPE_PURE_COOL)
-            == DEVICE_TYPE_PURE_COOL
-        )
-        assert (
-            map_product_type_to_device_type(DEVICE_TYPE_PURE_HOT_COOL)
-            == DEVICE_TYPE_PURE_HOT_COOL
-        )
+        assert map_product_type_to_device_type(DEVICE_TYPE_360_EYE) == DEVICE_TYPE_360_EYE
+        assert map_product_type_to_device_type(DEVICE_TYPE_PURE_COOL) == DEVICE_TYPE_PURE_COOL
+        assert map_product_type_to_device_type(DEVICE_TYPE_PURE_HOT_COOL) == DEVICE_TYPE_PURE_HOT_COOL
 
     def test_unknown_product_type(self):
         """Test handling of unknown product types."""
@@ -111,10 +95,7 @@ class TestMapProductTypeToDeviceType:
     def test_variant_as_direct_mapping(self):
         """Test when variant itself is a valid product type."""
         # Some variants might be valid product types themselves
-        assert (
-            map_product_type_to_device_type("TP07", variant="TP07")
-            == DEVICE_TYPE_PURE_COOL
-        )
+        assert map_product_type_to_device_type("TP07", variant="TP07") == DEVICE_TYPE_PURE_COOL
 
     def test_case_sensitivity(self):
         """Test that variant handling is case-insensitive."""
@@ -135,9 +116,7 @@ class TestMapProductTypeToDeviceType:
 class TestDysonDeviceInfo:
     """Test the DysonDeviceInfo dataclass."""
 
-    @patch(
-        "custom_components.dyson_local.libdyson.cloud.device_info.decrypt_password"
-    )
+    @patch("custom_components.dyson_local.libdyson.cloud.device_info.decrypt_password")
     def test_from_raw_basic(self, mock_decrypt):
         """Test basic device info creation from raw data."""
         mock_decrypt.return_value = "decrypted_password"
@@ -167,9 +146,7 @@ class TestDysonDeviceInfo:
 
         mock_decrypt.assert_called_once_with("encrypted_password")
 
-    @patch(
-        "custom_components.dyson_local.libdyson.cloud.device_info.decrypt_password"
-    )
+    @patch("custom_components.dyson_local.libdyson.cloud.device_info.decrypt_password")
     def test_from_raw_with_variant(self, mock_decrypt):
         """Test device info creation with variant field."""
         mock_decrypt.return_value = "decrypted_password"
@@ -191,9 +168,7 @@ class TestDysonDeviceInfo:
         assert device_info.product_type == "438"
         assert device_info.variant == "M"
 
-    @patch(
-        "custom_components.dyson_local.libdyson.cloud.device_info.decrypt_password"
-    )
+    @patch("custom_components.dyson_local.libdyson.cloud.device_info.decrypt_password")
     def test_from_raw_with_type_field(self, mock_decrypt):
         """Test device info creation when type field contains full type+variant."""
         mock_decrypt.return_value = "decrypted_password"
@@ -215,9 +190,7 @@ class TestDysonDeviceInfo:
         assert device_info.product_type == "358E"
         assert device_info.variant == "E"
 
-    @patch(
-        "custom_components.dyson_local.libdyson.cloud.device_info.decrypt_password"
-    )
+    @patch("custom_components.dyson_local.libdyson.cloud.device_info.decrypt_password")
     def test_from_raw_variant_from_firmware(self, mock_decrypt):
         """Test variant extraction from firmware version."""
         mock_decrypt.return_value = "decrypted_password"
@@ -249,9 +222,7 @@ class TestDysonDeviceInfo:
         device_info = DysonDeviceInfo.from_raw(raw_data)
         assert device_info.variant == "E"
 
-    @patch(
-        "custom_components.dyson_local.libdyson.cloud.device_info.decrypt_password"
-    )
+    @patch("custom_components.dyson_local.libdyson.cloud.device_info.decrypt_password")
     def test_from_raw_ecg2_firmware(self, mock_decrypt):
         """Test E variant detection from ECG2 firmware prefix."""
         mock_decrypt.return_value = "decrypted_password"
@@ -270,9 +241,7 @@ class TestDysonDeviceInfo:
         device_info = DysonDeviceInfo.from_raw(raw_data)
         assert device_info.variant == "E"
 
-    @patch(
-        "custom_components.dyson_local.libdyson.cloud.device_info.decrypt_password"
-    )
+    @patch("custom_components.dyson_local.libdyson.cloud.device_info.decrypt_password")
     def test_from_raw_missing_active_field(self, mock_decrypt):
         """Test device info creation when Active field is missing."""
         mock_decrypt.return_value = "decrypted_password"
@@ -307,9 +276,7 @@ class TestDysonDeviceInfo:
 
         assert device_info.get_device_type() == DEVICE_TYPE_PURE_COOL_LINK
 
-    @pytest.mark.xfail(
-        reason="get_device_type doesn't pass variant to map_product_type_to_device_type"
-    )
+    @pytest.mark.xfail(reason="get_device_type doesn't pass variant to map_product_type_to_device_type")
     def test_get_device_type_with_variant(self):
         """Test get_device_type with variant."""
         device_info = DysonDeviceInfo(
@@ -328,9 +295,7 @@ class TestDysonDeviceInfo:
         # Currently failing because it passes variant=None
         assert device_info.get_device_type() == "438M"
 
-    @pytest.mark.xfail(
-        reason="get_device_type doesn't pass extracted variant to map_product_type_to_device_type"
-    )
+    @pytest.mark.xfail(reason="get_device_type doesn't pass extracted variant to map_product_type_to_device_type")
     def test_get_device_type_variant_from_firmware(self):
         """Test get_device_type extracting variant from firmware."""
         device_info = DysonDeviceInfo(
@@ -411,9 +376,7 @@ class TestDysonDeviceInfo:
 
         assert device_info.get_device_type() == expected
 
-    @patch(
-        "custom_components.dyson_local.libdyson.cloud.device_info.decrypt_password"
-    )
+    @patch("custom_components.dyson_local.libdyson.cloud.device_info.decrypt_password")
     def test_from_raw_with_valid_base64(self, mock_decrypt):
         """Test with a valid base64 encoded password."""
         mock_decrypt.return_value = "decrypted_password"

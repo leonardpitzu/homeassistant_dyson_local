@@ -37,4 +37,3 @@ class DysonFilterResetButton(DysonEntity, ButtonEntity):
     def press(self) -> None:
         """Reset the filter life counter."""
         self._device.reset_filter()
-

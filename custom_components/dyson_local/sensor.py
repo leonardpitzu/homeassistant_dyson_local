@@ -105,9 +105,7 @@ class DysonSensorEnvironmental(CoordinatorEntity, DysonSensor):
     _MESSAGE_TYPE = MessageType.ENVIRONMENTAL
     _device_attr: str
 
-    def __init__(
-        self, coordinator: DataUpdateCoordinator[None], device: DysonDevice, name: str
-    ) -> None:
+    def __init__(self, coordinator: DataUpdateCoordinator[None], device: DysonDevice, name: str) -> None:
         """Initialize the environmental sensor."""
         CoordinatorEntity.__init__(self, coordinator)
         DysonSensor.__init__(self, device, name)
@@ -137,6 +135,7 @@ class DysonBatterySensor(DysonSensor):
     _sub_name = "Battery Level"
     _attr_device_class = SensorDeviceClass.BATTERY
     _attr_native_unit_of_measurement = PERCENTAGE
+    _attr_state_class = SensorStateClass.MEASUREMENT
 
     @property
     def native_value(self) -> int:
@@ -342,4 +341,3 @@ class DysonCarbonDioxideSensor(DysonSensorEnvironmental):
     _attr_device_class = SensorDeviceClass.CO2
     _attr_native_unit_of_measurement = UnitOfRatio.PARTS_PER_MILLION
     _attr_state_class = SensorStateClass.MEASUREMENT
-

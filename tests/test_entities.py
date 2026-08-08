@@ -3,12 +3,23 @@
 from unittest.mock import MagicMock
 
 import pytest
+from homeassistant.components.sensor import SensorDeviceClass
+from homeassistant.components.vacuum import VacuumEntityFeature
+from homeassistant.const import PERCENTAGE
 
 from custom_components.dyson_local.binary_sensor import DysonFilterReplacementSensor
 from custom_components.dyson_local.fan import DysonPureCoolEntity
 from custom_components.dyson_local.libdyson import VacuumState
-from custom_components.dyson_local.sensor import DysonPM25Sensor, DysonTemperatureSensor
-from custom_components.dyson_local.vacuum import DYSON_ACTIVITIES, DYSON_STATUS
+from custom_components.dyson_local.sensor import (
+    DysonBatterySensor,
+    DysonPM25Sensor,
+    DysonTemperatureSensor,
+)
+from custom_components.dyson_local.vacuum import (
+    DYSON_ACTIVITIES,
+    DYSON_STATUS,
+    SUPPORTED_FEATURES,
+)
 
 SERIAL = "NK6-EU-ABC1234A"
 DEVICE_NAME = "Living Room"
@@ -66,3 +77,15 @@ def test_every_vacuum_state_is_mapped() -> None:
     for state in VacuumState:
         assert state in DYSON_ACTIVITIES
         assert state in DYSON_STATUS
+
+
+def test_vacuum_battery_lives_on_the_sensor(device: MagicMock) -> None:
+    """Battery moved off the vacuum entity; the sensor is the replacement."""
+    assert VacuumEntityFeature.BATTERY not in SUPPORTED_FEATURES
+
+    device.battery_level = 55
+    sensor = DysonBatterySensor(device, DEVICE_NAME)
+    assert sensor.unique_id == f"{SERIAL}-battery_level"
+    assert sensor.device_class is SensorDeviceClass.BATTERY
+    assert sensor.native_unit_of_measurement == PERCENTAGE
+    assert sensor.native_value == 55

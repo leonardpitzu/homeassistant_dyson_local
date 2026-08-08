@@ -24,9 +24,12 @@ jobs:
       - uses: actions/setup-python@v7
         with:
           python-version: "3.14"
-      - run: pip install ruff
+      # Pinned via requirements_test.txt so a ruff release cannot change formatting under CI.
+      - run: pip install "$(grep -i '^ruff==' requirements_test.txt)"
       - name: Check for errors
         run: ruff check .
+      - name: Check formatting
+        run: ruff format --check .
 
   tests:
     name: Tests

@@ -80,13 +80,9 @@ async def async_setup_entry(
     async_add_entities([entity])
 
     platform = entity_platform.current_platform.get()
-    platform.async_register_entity_service(
-        SERVICE_SET_TIMER, SET_TIMER_SCHEMA, "set_timer"
-    )
+    platform.async_register_entity_service(SERVICE_SET_TIMER, SET_TIMER_SCHEMA, "set_timer")
     if isinstance(device, DysonPureCool):
-        platform.async_register_entity_service(
-            SERVICE_SET_ANGLE, SET_ANGLE_SCHEMA, "set_angle"
-        )
+        platform.async_register_entity_service(SERVICE_SET_ANGLE, SET_ANGLE_SCHEMA, "set_angle")
 
 
 class DysonFanEntity(DysonEntity, FanEntity):
@@ -253,4 +249,3 @@ class DysonPurifierHumidifyCoolEntity(DysonFanEntity):
             self._device.disable_front_airflow()
         else:
             raise ValueError(f"Invalid direction {direction}")
-

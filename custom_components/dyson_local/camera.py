@@ -84,4 +84,3 @@ class DysonCleaningMapEntity(Camera):
             return
         self._last_cleaning_task = last_task
         self._image = self._device.get_cleaning_map(self._last_cleaning_task.cleaning_id)
-

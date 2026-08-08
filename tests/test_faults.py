@@ -35,18 +35,14 @@ def test_faults_topic(device: DysonPurifierHumidifyCool) -> None:
 
 def test_current_faults_all_ok(device: DysonPurifierHumidifyCool) -> None:
     """An OK CURRENT-FAULTS message clears every fault."""
-    device._handle_message(
-        {"msg": "CURRENT-FAULTS", "product-warnings": {"tnke": "OK", "fltr": "OK"}}
-    )
+    device._handle_message({"msg": "CURRENT-FAULTS", "product-warnings": {"tnke": "OK", "fltr": "OK"}})
     assert device.water_tank_empty is False
     assert device.filter_replacement_required is False
 
 
 def test_current_faults_water_tank_empty(device: DysonPurifierHumidifyCool) -> None:
     """A FAIL on tnke marks the water tank empty without affecting the filter."""
-    device._handle_message(
-        {"msg": "CURRENT-FAULTS", "product-warnings": {"tnke": "FAIL", "fltr": "OK"}}
-    )
+    device._handle_message({"msg": "CURRENT-FAULTS", "product-warnings": {"tnke": "FAIL", "fltr": "OK"}})
     assert device.water_tank_empty is True
     assert device.filter_replacement_required is False
 
@@ -56,17 +52,13 @@ def test_faults_change_list_form(device: DysonPurifierHumidifyCool) -> None:
     device._handle_message({"msg": "CURRENT-FAULTS", "product-warnings": {"fltr": "OK"}})
     assert device.filter_replacement_required is False
 
-    device._handle_message(
-        {"msg": "FAULTS-CHANGE", "product-warnings": {"fltr": ["OK", "FAIL"]}}
-    )
+    device._handle_message({"msg": "FAULTS-CHANGE", "product-warnings": {"fltr": ["OK", "FAIL"]}})
     assert device.filter_replacement_required is True
 
 
 def test_faults_persist_across_partial_updates(device: DysonPurifierHumidifyCool) -> None:
     """A later message that omits a field leaves its prior value intact."""
-    device._handle_message(
-        {"msg": "CURRENT-FAULTS", "product-warnings": {"tnke": "FAIL", "fltr": "OK"}}
-    )
+    device._handle_message({"msg": "CURRENT-FAULTS", "product-warnings": {"tnke": "FAIL", "fltr": "OK"}})
     device._handle_message({"msg": "FAULTS-CHANGE", "product-warnings": {"fltr": ["OK", "FAIL"]}})
     assert device.water_tank_empty is True
     assert device.filter_replacement_required is True

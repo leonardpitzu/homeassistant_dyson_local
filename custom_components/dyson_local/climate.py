@@ -149,4 +149,3 @@ class DysonPureHotCoolLinkEntity(DysonClimateEntity):
 
 class DysonPureHotCoolEntity(DysonClimateEntity):
     """Dyson Pure Hot+Cool entity."""
-

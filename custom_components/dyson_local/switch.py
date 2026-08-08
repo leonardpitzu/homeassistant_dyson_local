@@ -96,4 +96,3 @@ class DysonFocusModeSwitchEntity(DysonEntity, SwitchEntity):
     def turn_off(self, **kwargs) -> None:
         """Turn off switch."""
         self._device.disable_focus_mode()
-

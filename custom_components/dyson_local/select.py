@@ -26,9 +26,7 @@ AIR_QUALITY_TARGET_ENUM_TO_STR = {
     AirQualityTarget.VERY_SENSITIVE: "Very Sensitive",
 }
 
-AIR_QUALITY_TARGET_STR_TO_ENUM = {
-    value: key for key, value in AIR_QUALITY_TARGET_ENUM_TO_STR.items()
-}
+AIR_QUALITY_TARGET_STR_TO_ENUM = {value: key for key, value in AIR_QUALITY_TARGET_ENUM_TO_STR.items()}
 
 OSCILLATION_MODE_ENUM_TO_STR = {
     HumidifyOscillationMode.DEGREE_45: "45°",
@@ -37,9 +35,7 @@ OSCILLATION_MODE_ENUM_TO_STR = {
     HumidifyOscillationMode.CUST: "Custom",
 }
 
-OSCILLATION_MODE_STR_TO_ENUM = {
-    value: key for key, value in OSCILLATION_MODE_ENUM_TO_STR.items()
-}
+OSCILLATION_MODE_STR_TO_ENUM = {value: key for key, value in OSCILLATION_MODE_ENUM_TO_STR.items()}
 
 TILT_ENUM_TO_STR = {
     0: "0°",
@@ -48,9 +44,7 @@ TILT_ENUM_TO_STR = {
     359: "Breeze",
 }
 
-TILT_STR_TO_ENUM = {
-    value: key for key, value in TILT_ENUM_TO_STR.items()
-}
+TILT_STR_TO_ENUM = {value: key for key, value in TILT_ENUM_TO_STR.items()}
 
 
 WATER_HARDNESS_STR_TO_ENUM = {
@@ -59,9 +53,7 @@ WATER_HARDNESS_STR_TO_ENUM = {
     "Hard": WaterHardness.HARD,
 }
 
-WATER_HARDNESS_ENUM_TO_STR = {
-    value: key for key, value in WATER_HARDNESS_STR_TO_ENUM.items()
-}
+WATER_HARDNESS_ENUM_TO_STR = {value: key for key, value in WATER_HARDNESS_STR_TO_ENUM.items()}
 
 
 async def async_setup_entry(

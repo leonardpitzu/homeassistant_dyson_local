@@ -32,7 +32,6 @@ SUPPORTED_FEATURES = (
     | VacuumEntityFeature.FAN_SPEED
     | VacuumEntityFeature.STATUS
     | VacuumEntityFeature.STATE
-    | VacuumEntityFeature.BATTERY
 )
 
 DYSON_STATUS = {
@@ -111,26 +110,20 @@ EYE_POWER_MODE_ENUM_TO_STR = {
     VacuumEyePowerMode.QUIET: "Quiet",
     VacuumEyePowerMode.MAX: "Max",
 }
-EYE_POWER_MODE_STR_TO_ENUM = {
-    value: key for key, value in EYE_POWER_MODE_ENUM_TO_STR.items()
-}
+EYE_POWER_MODE_STR_TO_ENUM = {value: key for key, value in EYE_POWER_MODE_ENUM_TO_STR.items()}
 HEURIST_POWER_MODE_ENUM_TO_STR = {
     VacuumHeuristPowerMode.QUIET: "Quiet",
     VacuumHeuristPowerMode.HIGH: "High",
     VacuumHeuristPowerMode.MAX: "Max",
 }
-HEURIST_POWER_MODE_STR_TO_ENUM = {
-    value: key for key, value in HEURIST_POWER_MODE_ENUM_TO_STR.items()
-}
+HEURIST_POWER_MODE_STR_TO_ENUM = {value: key for key, value in HEURIST_POWER_MODE_ENUM_TO_STR.items()}
 VIS_NAV_POWER_MODE_ENUM_TO_STR = {
     VacuumVisNavPowerMode.AUTO: "Auto",
     VacuumVisNavPowerMode.QUICK: "Quick",
     VacuumVisNavPowerMode.QUIET: "Quiet",
     VacuumVisNavPowerMode.BOOST: "Boost",
 }
-VIS_NAV_POWER_MODE_STR_TO_ENUM = {
-    value: key for key, value in VIS_NAV_POWER_MODE_ENUM_TO_STR.items()
-}
+VIS_NAV_POWER_MODE_STR_TO_ENUM = {value: key for key, value in VIS_NAV_POWER_MODE_ENUM_TO_STR.items()}
 
 ATTR_POSITION = "position"
 
@@ -166,12 +159,6 @@ class DysonVacuumEntity(DysonEntity, StateVacuumEntity):
     def status(self) -> str:
         """Return the status of the vacuum."""
         return DYSON_STATUS[self._device.state]
-
-    # Deprecated upstream, kept so the battery_level state attribute survives.
-    @property
-    def battery_level(self) -> int:
-        """Return the battery level of the vacuum cleaner."""
-        return self._device.battery_level
 
     @property
     def available(self) -> bool:
