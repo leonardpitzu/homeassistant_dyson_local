@@ -1,4 +1,4 @@
 pytest-homeassistant-custom-component==0.13.354
-ruff==0.16.5
+ruff==0.16.7
 # homeassistant.components.camera imports it at module level
 PyTurboJPEG
